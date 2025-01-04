@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset = "utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>BMI Calculator</h1>
+        <form id="bmiform">
+            <p>
+                <label for="weightid">Enter weight (kg):</label>
+                <input type="number" id="weightid" name="weight" step="0.01" required>
+
+            </p>
+            <p>
+                <label for="heightid">Enter height (cm): </label>
+                <input type="number" id="heightid" name="height" step="0.01" required>
+            </p>
+            <input type="submit" value="Submit">
+        </form>
+        <div id="resultContainer"></div>
+    </div>
+    <script>
+        const form = document.querySelector("#bmiform");
+        async function  sendData(){
+            const weight = document.querySelector("#weightid").value;
+            const height = document.querySelector("#heightid").value;
+
+            if(!weight || !height){
+                alert("Please fill out both fields");
+                return;
+            }
+            if(weight < 0 || height < 0){
+                alert("The weight and height nust be greater than zero");
+                return;
+            }
+
+            const params = new URLSearchParams({weight, height}).toString();
+            try{
+                const response = await fetch(`http://localhost:5000?${params}`, {
+                    method: 'POST',
+                });
+                if(response.ok){
+                    const result = await response.json();
+                    const categoryClass = 
+                        result.category === "Normal" ? "normal" :
+                            result.category === "Overweight" ? "overweight" : "obese";
+                    
+                    document.querySelector("#resultContainer").innerHTML = `
+                    <div class=${categoryClass}>
+                        <p><strong>BMI calculated: ${result.bmi}</strong></p>
+                        <p><strong>Category: ${result.category}</strong></p>
+                    </div>    
+                    `;
+                }else{
+                    document.querySelector("#resultContainer").innerHTML = `
+                    <p class="error"> Failed to calculate BMI. Please try again later.</p>
+                    `;
+                }
+                
+            }catch (error){
+                console.error('Error:', error);
+                document.querySelector("#resultContainer").innerHTML = `
+                <p class="error">An error occurated while sending data</p>
+                `;
+                
+            }
+        }
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            sendData();
+        });
+    </script>
+</body>
+</html>
